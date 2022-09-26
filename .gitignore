@@ -5,6 +5,9 @@
 *.so
 *.dylib
 
+# goland file
+*.iml
+
 # Test binary, built with `go test -c`
 *.test
 
