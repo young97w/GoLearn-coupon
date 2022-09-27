@@ -6,5 +6,6 @@ import (
 )
 
 func main() {
-	fmt.Println(internal.AppConf)
+	//fmt.Println(internal.AppConf)
+	fmt.Println(internal.GRPC == "grpc")
 }

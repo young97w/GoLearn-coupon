@@ -1,0 +1,73 @@
+syntax = "proto3";
+
+option go_package = "./pb";
+
+service AccountService{
+    rpc GetAccountList(ListAccountReq) returns (AccountListRes);
+    rpc GetAccountByMobile(MobileAccountReq) returns (AccountRes);
+    rpc GetAccountById(IdAccountReq) returns (AccountRes);
+    rpc AddAccount(AddAccountReq) returns (AccountRes);
+    rpc UpdateAccount(UpdateAccountReq) returns (UpdateAccountRes);
+    rpc CheckPassword(CheckPasswordReq) returns (CheckPasswordRes);
+}
+
+message ListAccountReq{
+    uint32 pageNo=1;
+    uint32 pageSize=2;
+}
+
+message AccountListRes{
+    int32 total=1;
+    repeated AccountRes accountList=2;
+}
+
+message MobileAccountReq{
+    string mobile=1;
+}
+
+message AccountRes{
+    int32 id=1;
+    string mobile=2;
+    string salt=3;
+    string password=4;
+    string nickname=5;
+    string gender=6;
+    bool isEmployee =7;
+    uint32 role=8;
+}
+
+message IdAccountReq{
+    int32 id=1;
+}
+
+message AddAccountReq{
+    string mobile=1;
+    string password=2;
+    string nickname=3;
+    string gender=4;
+    bool isEmployee =5;
+    uint32 role=6;
+}
+
+message UpdateAccountReq{
+    uint32 id=1;
+    string mobile=2;
+    string password=3;
+    string nickname=4;
+    string gender=5;
+    bool isEmployee =6;
+    uint32 role=7;
+}
+
+message UpdateAccountRes{
+    bool result=1;
+}
+
+message CheckPasswordReq{
+    string mobile=1;
+    string password=3;
+}
+
+message CheckPasswordRes{
+    bool result=1;
+}

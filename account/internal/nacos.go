@@ -14,7 +14,7 @@ type nacosConfig struct {
 	TimeoutMs           uint64 `mapstructure:"TimeOutMs"`
 	NamespaceId         string `mapstructure:"NamespaceId"`
 	DataId              string `mapstructure:"DataId"`
-	CacheDir            string `mapstructure:"NamespaceId"`
+	CacheDir            string `mapstructure:"CacheDir"`
 	NotLoadCacheAtStart bool   `mapstructure:"NotLoadCacheAtStart"`
 	LogDir              string `mapstructure:"LogDir"`
 	LogLevel            string `mapstructure:"LogLevel"`
