@@ -6,6 +6,7 @@ type AppConfig struct {
 	ProductSrvConfig AccountSrvConfig `mapstructure:"account_srv" json:"account_srv"`
 	ProductWebConfig AccountWebConfig `mapstructure:"account_web" json:"account_web"`
 	DBConfig         DBConfig         `mapstructure:"db" json:"db"`
+	JWTKey           JWTKey           `mapstructure:"jwt_key"json:"jwt_key"`
 	Debug            bool             `mapstructure:"debug" json:"debug"`
 }
 
@@ -21,4 +22,8 @@ type AccountWebConfig struct {
 	Host    string   `mapstructure:"host" json:"host"`
 	Port    int      `mapstructure:"port" json:"port"`
 	Tags    []string `mapstructure:"tags" json:"tags"`
+}
+
+type JWTKey struct {
+	SigningKey string `mastructure:"signing_key" json:"signing_key"`
 }

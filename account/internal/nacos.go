@@ -22,7 +22,7 @@ type nacosConfig struct {
 
 var AppConf AppConfig
 var nacosConf nacosConfig
-var fileName = "./dev-config.yaml"
+var fileName = "./config_center/dev-config.yaml"
 
 func init() {
 	InitNacos()
