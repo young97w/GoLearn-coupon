@@ -49,13 +49,41 @@ func (a AccountServer) AddAccount(ctx context.Context, req *pb.AddAccountReq) (*
 }
 
 func (a AccountServer) UpdateAccount(ctx context.Context, req *pb.UpdateAccountReq) (*pb.UpdateAccountRes, error) {
-	//TODO implement me
-	panic("implement me")
+	var account model.Account
+	r := internal.DB.Model(model.Account{}).First(&account, req.Id)
+	if r.RowsAffected == 0 {
+		log.Logger.Error(custom_error.AccountNotFind)
+		return nil, errors.New(custom_error.AccountNotFind)
+	}
+	if req.Role != 0 {
+		account.Role = int(req.Role)
+	}
+	if req.Nickname != "" {
+		account.NickName = req.Nickname
+	}
+	if req.Mobile != "" {
+		account.Mobile = req.Mobile
+	}
+	if req.Gender != "" {
+		account.Gender = req.Gender
+	}
+	r = internal.DB.Save(&account)
+	if r.RowsAffected == 0 {
+		log.Logger.Error(custom_error.InternalError)
+		return nil, errors.New(custom_error.InternalError)
+	}
+	return &pb.UpdateAccountRes{Result: true}, nil
 }
 
 func (a AccountServer) CheckPassword(ctx context.Context, req *pb.CheckPasswordReq) (*pb.CheckPasswordRes, error) {
-	//TODO implement me
-	panic("implement me")
+	var account model.Account
+	r := internal.DB.Model(model.Account{}).Where("mobile=?", req.Mobile).First(&account)
+	if r.RowsAffected == 0 {
+		log.Logger.Error(custom_error.AccountNotFind)
+		return nil, errors.New(custom_error.AccountNotFind)
+	}
+	check := password.CheckPwd(req.Password, account.Salt, account.Password)
+	return &pb.CheckPasswordRes{Result: check}, nil
 }
 
 func convertAccountModel2Pb(account *model.Account) pb.AccountRes {

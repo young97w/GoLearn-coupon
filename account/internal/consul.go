@@ -2,8 +2,12 @@ package internal
 
 import (
 	"account/log"
+	"encoding/json"
 	"fmt"
 	"github.com/hashicorp/consul/api"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/health"
+	"google.golang.org/grpc/health/grpc_health_v1"
 )
 
 type ConsulConfig struct {
@@ -31,7 +35,7 @@ func NewConsulRegistry(host, method, name, id string, tags []string, port int) C
 	}
 }
 
-func Register(cr ConsulRegistry) error {
+func (cr ConsulRegistry) Register(server *grpc.Server) error {
 	defaultConfig := api.DefaultConfig()
 	defaultConfig.Address = fmt.Sprintf("%s:%d", AppConf.ConsulConfig.Host, AppConf.ConsulConfig.Port)
 	client, err := api.NewClient(defaultConfig)
@@ -48,7 +52,11 @@ func Register(cr ConsulRegistry) error {
 		check.HTTP = serverAddr
 	} else {
 		check.GRPC = serverAddr
+		grpc_health_v1.RegisterHealthServer(server, health.NewServer())
 	}
+	fmt.Println("check is :", check)
+	bytes, _ := json.Marshal(check)
+	fmt.Println("check bytes is :", string(bytes))
 	agentServiceRegistration := api.AgentServiceRegistration{}
 
 	agentServiceRegistration.Address = cr.Host
@@ -62,7 +70,7 @@ func Register(cr ConsulRegistry) error {
 	return err
 }
 
-func Deregister(cr ConsulRegistry) error {
+func (cr ConsulRegistry) Deregister() error {
 	defaultConfig := api.DefaultConfig()
 	defaultConfig.Address = fmt.Sprintf("%s:%d", AppConf.ConsulConfig.Host, AppConf.ConsulConfig.Port)
 	client, err := api.NewClient(defaultConfig)
