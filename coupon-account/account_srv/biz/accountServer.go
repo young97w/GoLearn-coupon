@@ -9,28 +9,70 @@ import (
 	"account/proto/pb"
 	"context"
 	"errors"
+	"sync"
 )
+
+var m sync.Mutex
 
 type AccountServer struct {
 }
 
 func (a AccountServer) GetAccountList(ctx context.Context, req *pb.ListAccountReq) (*pb.AccountListRes, error) {
-	//TODO implement me
-	panic("implement me")
+	var accounts []model.Account
+	var res pb.AccountListRes
+	var accountList []*pb.AccountRes
+
+	r := internal.DB.Scopes(internal.Paginate(int(req.PageSize), int(req.PageNo))).Find(&accounts)
+	if r.RowsAffected < 1 {
+		log.Logger.Error(custom_error.AccountGetFailed)
+		return nil, errors.New(custom_error.AccountGetFailed)
+	}
+	for _, item := range accounts {
+		accountPb := convertAccountModel2Pb(&item)
+		accountList = append(accountList, &accountPb)
+	}
+	res.Total = int32(r.RowsAffected)
+	res.AccountList = accountList
+	return &res, nil
 }
 
 func (a AccountServer) GetAccountByMobile(ctx context.Context, req *pb.MobileAccountReq) (*pb.AccountRes, error) {
-	//TODO implement me
-	panic("implement me")
+	var account model.Account
+	if req.Mobile == "" {
+		log.Logger.Error(custom_error.ParameterIncorrect)
+		return nil, errors.New(custom_error.ParameterIncorrect)
+	}
+	r := internal.DB.Where("mobile=?", req.Mobile).First(&account)
+	if r.RowsAffected < 1 {
+		log.Logger.Error(custom_error.AccountNotFind)
+		return nil, errors.New(custom_error.AccountNotFind)
+	}
+	res := convertAccountModel2Pb(&account)
+	return &res, nil
 }
 
 func (a AccountServer) GetAccountById(ctx context.Context, req *pb.IdAccountReq) (*pb.AccountRes, error) {
-	//TODO implement me
-	panic("implement me")
+	var account model.Account
+	if req.Id == 0 {
+		log.Logger.Error(custom_error.ParameterIncorrect)
+		return nil, errors.New(custom_error.ParameterIncorrect)
+	}
+	r := internal.DB.First(&account, req.Id)
+	if r.RowsAffected < 1 {
+		log.Logger.Error(custom_error.AccountNotFind)
+		return nil, errors.New(custom_error.AccountNotFind)
+	}
+	res := convertAccountModel2Pb(&account)
+	return &res, nil
 }
 
 func (a AccountServer) AddAccount(ctx context.Context, req *pb.AddAccountReq) (*pb.AccountRes, error) {
 	var account model.Account
+	r := internal.DB.Model(model.Account{}).Where("mobile=?", req.Mobile).First(&account)
+	if r.RowsAffected > 0 {
+		log.Logger.Error(custom_error.AccountAlreadyExists)
+		return nil, errors.New(custom_error.AccountAlreadyExists)
+	}
 	salt, hsdPwd := password.GenerateHashedPwd(req.Password)
 	account.Salt = salt
 	account.Password = hsdPwd
@@ -39,7 +81,7 @@ func (a AccountServer) AddAccount(ctx context.Context, req *pb.AddAccountReq) (*
 	account.NickName = req.Nickname
 	account.Gender = req.Gender
 	account.IsEmployee = req.IsEmployee
-	r := internal.DB.Save(&account)
+	r = internal.DB.Save(&account)
 	if r.RowsAffected == 0 {
 		log.Logger.Error(custom_error.AccountCreateFailed)
 		return nil, errors.New(custom_error.AccountCreateFailed)
@@ -50,6 +92,8 @@ func (a AccountServer) AddAccount(ctx context.Context, req *pb.AddAccountReq) (*
 
 func (a AccountServer) UpdateAccount(ctx context.Context, req *pb.UpdateAccountReq) (*pb.UpdateAccountRes, error) {
 	var account model.Account
+	m.Lock()
+	defer m.Unlock()
 	r := internal.DB.Model(model.Account{}).First(&account, req.Id)
 	if r.RowsAffected == 0 {
 		log.Logger.Error(custom_error.AccountNotFind)

@@ -60,3 +60,18 @@ func InitDB() {
 	}
 	fmt.Println("连接成功！")
 }
+
+func Paginate(pageSize, pageNo int) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		switch {
+		case pageSize >= 100:
+			pageSize = 10
+		case pageSize < 1:
+			pageSize = 5
+		}
+		if pageNo < 1 {
+			pageNo = 1
+		}
+		return db.Offset((pageNo - 1) * pageSize).Limit(pageSize)
+	}
+}
