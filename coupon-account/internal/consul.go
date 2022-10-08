@@ -49,7 +49,7 @@ func (cr ConsulRegistry) Register(server *grpc.Server) error {
 		DeregisterCriticalServiceAfter: "6s",
 	}
 	if cr.Method == "http" {
-		check.HTTP = serverAddr
+		check.HTTP = fmt.Sprintf("http://%s:%d/health", cr.Host, cr.Port)
 	} else {
 		check.GRPC = serverAddr
 		grpc_health_v1.RegisterHealthServer(server, health.NewServer())
