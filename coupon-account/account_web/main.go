@@ -7,6 +7,7 @@ import (
 	"account/util"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"os"
 	"os/signal"
 	"syscall"
@@ -23,12 +24,12 @@ func init() {
 		port, _ = util.GenRandomPort()
 	}
 	host = internal.AppConf.AccountWebConfig.Host
-	//randUUID := uuid.New().String()
-	//cr = internal.NewConsulRegistry(host, "http", internal.AppConf.AccountWebConfig.SrvName, randUUID, internal.AppConf.AccountWebConfig.Tags, port)
-	//err := cr.Register(nil)
-	//if err != nil {
-	//	panic(err)
-	//}
+	randUUID := uuid.New().String()
+	cr = internal.NewConsulRegistry(host, "http", internal.AppConf.AccountWebConfig.SrvName, randUUID, internal.AppConf.AccountWebConfig.Tags, port)
+	err := cr.Register(nil)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func main() {
