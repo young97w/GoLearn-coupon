@@ -94,3 +94,12 @@ func TestAccountServer_GetAccountById(t *testing.T) {
 
 	fmt.Println(res)
 }
+
+func TestAccountServer_CheckPassword(t *testing.T) {
+	res, err := client.CheckPassword(context.Background(), &pb.CheckPasswordReq{Mobile: "18111444661", Password: "yynb666"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	fmt.Println(res.Result)
+}

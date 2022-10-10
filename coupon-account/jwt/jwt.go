@@ -11,8 +11,8 @@ import (
 
 type CustomClaims struct {
 	jwt.StandardClaims
-	ID       int32
-	Nickname string
+	ID     int32
+	Mobile string
 }
 
 type JWT struct {
@@ -24,6 +24,7 @@ func NewJWT() *JWT {
 }
 
 func (j *JWT) GenerateJWT(claims CustomClaims) (string, error) {
+	claims.StandardClaims.ExpiresAt = time.Now().Add(7 * 24 * time.Hour).Unix()
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	signedString, err := token.SignedString(j.SigningKey)
 	if err != nil {
@@ -61,7 +62,7 @@ func (j *JWT) RefreshJWT(tokenStr string) (string, error) {
 	customClaims := CustomClaims{
 		StandardClaims: claims.StandardClaims,
 		ID:             claims.ID,
-		Nickname:       claims.Nickname,
+		Mobile:         claims.Mobile,
 	}
 	tokenStr, err = j.GenerateJWT(customClaims)
 	if err != nil {

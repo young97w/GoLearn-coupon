@@ -6,7 +6,7 @@ import (
 )
 
 func TestGenCaptcha(t *testing.T) {
-	res, err := GenCaptcha("123")
+	_, res, err := GenCaptcha()
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -8,17 +8,18 @@ import (
 	"encoding/base64"
 	"fmt"
 	"github.com/dchest/captcha"
+	"github.com/google/uuid"
 	"io"
 	"os"
 	"time"
 )
 
-func GenCaptcha(mobile string) (string, error) {
+func GenCaptcha() (string, string, error) {
 	fileName := "captcha.png"
 	f, err := os.Create(fileName)
 	if err != nil {
 		log.Logger.Info("GenerateCaptcha failed:" + err.Error())
-		return "", err
+		return "", "", err
 	}
 	defer f.Close()
 	var w io.WriterTo
@@ -27,7 +28,7 @@ func GenCaptcha(mobile string) (string, error) {
 	_, err = w.WriteTo(f)
 	if err != nil {
 		log.Logger.Info("Generate Captcha failed:" + err.Error())
-		return "", err
+		return "", "", err
 	}
 	fmt.Println(b)
 	captchaStr := ""
@@ -35,14 +36,15 @@ func GenCaptcha(mobile string) (string, error) {
 		captchaStr += fmt.Sprintf("%d", item)
 	}
 	fmt.Println("captchaStr: " + captchaStr)
-	internal.RedisClient.Set(context.Background(), mobile, captchaStr, 120*time.Second)
+	randUUID := uuid.New().String()
+	internal.RedisClient.Set(context.Background(), randUUID, captchaStr, 120*time.Second)
 	b64, err := getBase64(fileName)
 	if err != nil {
 		log.Logger.Info("generate base64 failed:" + err.Error())
-		return "", err
+		return "", "", err
 	}
 	fmt.Println(b64)
-	return b64, nil
+	return randUUID, b64, nil
 }
 
 func getBase64(fileName string) (string, error) {
