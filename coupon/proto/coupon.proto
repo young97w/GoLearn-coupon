@@ -1,0 +1,113 @@
+syntax = "proto3";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "./pb";
+
+service CouponService{
+    rpc AddCoffee(CoffeeReq) returns (CoffeeRes);
+    rpc DeleteCoffee(DeleteCoffeeReq) returns (DeleteCoffeeRes);
+    rpc UpdateCoffee(CoffeeReq)returns (CoffeeRes);
+    rpc ListCoffee(ListCoffeeReq)returns (CoffeeListRes);
+    rpc GetCoffee(CoffeeReq) returns (CoffeeRes);
+
+    rpc AddCoupon(CouponReq) returns (CouponRes);
+    rpc ListCoupon(ListCouponReq) returns (CouponListRes);
+    rpc DeleteCoupon(CouponReq) returns (DeleteCouponRes);
+    rpc AssignCoupon(CouponReq) returns (CouponRes);
+    rpc UseCoupon(UseCouponReq) returns (UseCouponRes);
+}
+
+message CoffeeReq{
+    int32   id=1;
+    string  name=2;
+    float   price=3;
+    float   realPrice=4;
+    int32   soldNum=5;
+    string  kku=6;
+    string  description=7;
+    string  image=8;
+}
+
+message CoffeeRes{
+    int32   id=1;
+    string  name=2;
+    float   price=3;
+    float   realPrice=4;
+    int32   soldNum=5;
+    string  sku=6;
+    string  description=7;
+    string  image=8;
+}
+
+message DeleteCoffeeReq{
+    repeated int32 id=1;
+}
+
+message DeleteCoffeeRes{
+    bool result=1;
+}
+
+message ListCoffeeReq{
+    int32 pageSize=1;
+    int32 pageNo=2;
+}
+
+message CoffeeListRes{
+    repeated CoffeeListRes coffeeList=1;
+    int32 total=2;
+}
+
+message CouponReq{
+    int32 id=1;
+    string code=2;
+    string name=3;
+    int32 couponType=4;
+    int32 discountType=5;
+    float discount=6;
+    float discountFrom=7;
+    bool added=8;
+    float ratio=9;
+    bool used=10;
+    google.protobuf.Timestamp enableAt=11;
+    google.protobuf.Timestamp expiredAt=12;
+    int32 accountId=13;
+}
+
+message CouponRes{
+    int32 id=1;
+    string code=2;
+    string name=3;
+    int32 couponType=4;
+    int32 discountType=5;
+    float discount=6;
+    float discountFrom=7;
+    bool added=8;
+    float ratio=9;
+    bool used=10;
+    google.protobuf.Timestamp enableAt=11;
+    google.protobuf.Timestamp expiredAt=12;
+    int32 accountId=13;
+}
+
+message ListCouponReq{
+    int32 pageSize=1;
+    int32 pageNo=2;
+}
+
+message CouponListRes{
+    repeated CouponRes couponList=1;
+    int32 total=2;
+}
+
+message DeleteCouponRes{
+    repeated int32 id=1;
+}
+
+message UseCouponReq{
+    repeated int32 couponId=1;
+    float amount=2;
+}
+
+message UseCouponRes{
+    bool result=1;
+}
