@@ -4,11 +4,11 @@ import "google/protobuf/timestamp.proto";
 option go_package = "./pb";
 
 service CouponService{
-    rpc AddCoffee(CoffeeReq) returns (CoffeeRes);
+    rpc AddCoffee(CoffeeItem) returns (CoffeeItem);
     rpc DeleteCoffee(DeleteCoffeeReq) returns (DeleteCoffeeRes);
-    rpc UpdateCoffee(CoffeeReq)returns (CoffeeRes);
+    rpc UpdateCoffee(CoffeeItem)returns (CoffeeItem);
     rpc ListCoffee(ListCoffeeReq)returns (CoffeeListRes);
-    rpc GetCoffee(CoffeeReq) returns (CoffeeRes);
+    rpc GetCoffee(CoffeeItem) returns (CoffeeItem);
 
     rpc AddCoupon(CouponReq) returns (CouponRes);
     rpc ListCoupon(ListCouponReq) returns (CouponListRes);
@@ -17,18 +17,7 @@ service CouponService{
     rpc UseCoupon(UseCouponReq) returns (UseCouponRes);
 }
 
-message CoffeeReq{
-    int32   id=1;
-    string  name=2;
-    float   price=3;
-    float   realPrice=4;
-    int32   soldNum=5;
-    string  kku=6;
-    string  description=7;
-    string  image=8;
-}
-
-message CoffeeRes{
+message CoffeeItem{
     int32   id=1;
     string  name=2;
     float   price=3;
