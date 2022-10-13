@@ -2,7 +2,6 @@ package model
 
 import (
 	"gorm.io/gorm"
-	"time"
 )
 
 type Coupon struct {
@@ -16,8 +15,8 @@ type Coupon struct {
 	Added        bool    `gorm:"comment' can be added with different coupon'"`
 	Ratio        float32
 	Used         bool
-	EnableAt     time.Time `gorm:"not null"`
-	ExpiredAt    time.Time `gorm:"not null"`
+	EnableAt     string `gorm:"type:date;not null"`
+	ExpiredAt    string `gorm:"type:date;not null"`
 	AccountId    uint
 	Account      *Account
 	CoffeeId     uint

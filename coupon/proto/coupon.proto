@@ -1,5 +1,4 @@
 syntax = "proto3";
-import "google/protobuf/timestamp.proto";
 
 option go_package = "./pb";
 
@@ -10,10 +9,10 @@ service CouponService{
     rpc ListCoffee(ListCoffeeReq)returns (CoffeeListRes);
     rpc GetCoffee(CoffeeItem) returns (CoffeeItem);
 
-    rpc AddCoupon(CouponReq) returns (CouponRes);
+    rpc AddCoupon(AddCouponReq) returns (CouponItem);
     rpc ListCoupon(ListCouponReq) returns (CouponListRes);
-    rpc DeleteCoupon(CouponReq) returns (DeleteCouponRes);
-    rpc AssignCoupon(CouponReq) returns (CouponRes);
+    rpc DeleteCoupon(CouponItem) returns (DeleteCouponRes);
+    rpc AssignCoupon(CouponItem) returns (CouponItem);
     rpc UseCoupon(UseCouponReq) returns (UseCouponRes);
 }
 
@@ -42,27 +41,30 @@ message ListCoffeeReq{
 }
 
 message CoffeeListRes{
-    repeated CoffeeListRes coffeeList=1;
+    repeated CoffeeItem coffeeList=1;
     int32 total=2;
 }
 
-message CouponReq{
-    int32 id=1;
-    string code=2;
-    string name=3;
-    int32 couponType=4;
-    int32 discountType=5;
-    float discount=6;
-    float discountFrom=7;
-    bool added=8;
-    float ratio=9;
-    bool used=10;
-    google.protobuf.Timestamp enableAt=11;
-    google.protobuf.Timestamp expiredAt=12;
-    int32 accountId=13;
+message AddCouponReq{
+    int32 amount=1;
+    string name=2;
+    int32 couponType=3;
+    int32 discountType=4;
+    float discount=5;
+    float discountFrom=6;
+    bool added=7;
+    float ratio=8;
+    bool used=9;
+    int32 enableAt=10;
+    int32 expiredAt=11;
 }
 
-message CouponRes{
+message AddCouponRes{
+    int32 total=1;
+    repeated CouponItem couponList=2;
+}
+
+message CouponItem{
     int32 id=1;
     string code=2;
     string name=3;
@@ -73,8 +75,8 @@ message CouponRes{
     bool added=8;
     float ratio=9;
     bool used=10;
-    google.protobuf.Timestamp enableAt=11;
-    google.protobuf.Timestamp expiredAt=12;
+    int32 enableAt=11;
+    int32 expiredAt=12;
     int32 accountId=13;
 }
 
@@ -84,7 +86,7 @@ message ListCouponReq{
 }
 
 message CouponListRes{
-    repeated CouponRes couponList=1;
+    repeated CouponItem couponList=1;
     int32 total=2;
 }
 
