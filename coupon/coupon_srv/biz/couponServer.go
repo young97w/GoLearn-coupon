@@ -15,6 +15,7 @@ import (
 )
 
 func (c CoffeeServer) AddCoupon(ctx context.Context, req *pb.AddCouponReq) (*pb.AddCouponRes, error) {
+	var total int32
 	if req.Amount < 1 {
 		log.Logger.Info("add coupon amounts must greater than 1")
 		return nil, errors.New("add coupon amounts must greater than 1")
@@ -22,7 +23,6 @@ func (c CoffeeServer) AddCoupon(ctx context.Context, req *pb.AddCouponReq) (*pb.
 	amount := int(req.Amount)
 	tx := internal.DB.Begin()
 	today := fmt.Sprintf("CPN-%s-", time.Now().Format("2006-01-02"))
-	couponList := make([]*model.Coupon, 100)
 	myMod := int(math.Mod(float64(amount), 100))
 	for i := 0; i < amount; {
 		genCounts := 0
@@ -32,6 +32,8 @@ func (c CoffeeServer) AddCoupon(ctx context.Context, req *pb.AddCouponReq) (*pb.
 			genCounts = myMod
 		}
 		code := fmt.Sprintf("%s-%s", today, uuid.New().String())
+		//batch create
+		couponList := make([]*model.Coupon, 100)
 		for j := 0; j < genCounts; j++ {
 			coupon := &model.Coupon{
 				Code:         code,
@@ -46,18 +48,18 @@ func (c CoffeeServer) AddCoupon(ctx context.Context, req *pb.AddCouponReq) (*pb.
 				EnableAt:     time.Unix(int64(req.EnableAt), 0).Format("2006-01-02"),
 				ExpiredAt:    time.Unix(int64(req.ExpiredAt), 0).Format("2006-01-02"),
 			}
-			couponList = append(couponList)
-			i++
+			couponList = append(couponList, coupon)
 		}
-
-		r := tx.Save()
-		if r.RowsAffected == 0 {
+		r := tx.CreateInBatches(couponList, genCounts)
+		if r.RowsAffected != int64(genCounts) {
 			log.Logger.Error(custom_error.AddCouponFailed)
 			tx.Rollback()
 			return nil, errors.New(custom_error.AddCouponFailed)
 		}
+		total += int32(genCounts)
+		i++
 	}
-	panic("")
+	return &pb.AddCouponRes{Total: total}, nil
 }
 
 func (c CoffeeServer) ListCoupon(ctx context.Context, req *pb.ListCouponReq) (*pb.CouponListRes, error) {
