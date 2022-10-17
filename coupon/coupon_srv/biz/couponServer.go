@@ -63,23 +63,90 @@ func (c CoffeeServer) AddCoupon(ctx context.Context, req *pb.AddCouponReq) (*pb.
 }
 
 func (c CoffeeServer) ListCoupon(ctx context.Context, req *pb.ListCouponReq) (*pb.CouponListRes, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (c CoffeeServer) DeleteCoupon(ctx context.Context, req *pb.CouponItem) (*pb.DeleteCouponRes, error) {
-	//TODO implement me
-	panic("implement me")
+	var res pb.CouponListRes
+	var couponList []*pb.CouponItem
+	var coupons []*model.Coupon
+	db := internal.DB.Scopes(internal.Paginate(int(req.PageSize), int(req.PageNo))).Model(&model.Coupon{})
+	if req.Name != "" {
+		db = db.Where("name =?", req.Name)
+	}
+	if req.EnableAt != 0 {
+		enableAt := time.Unix(int64(req.EnableAt), 0).Format("2006-01-02")
+		switch req.EnableAtOpt {
+		case "<":
+			db = db.Where("enableAt <?", enableAt)
+		case "<=":
+			db = db.Where("enableAt <=?", enableAt)
+		case ">":
+			db = db.Where("enableAt >?", enableAt)
+		case ">=":
+			db = db.Where("enableAt >=?", enableAt)
+		default:
+			db = db.Where("enableAt =?", enableAt)
+		}
+	}
+	if req.ExpiredAt != 0 {
+		expiredAt := time.Unix(int64(req.ExpiredAt), 0).Format("2006-01-02")
+		switch req.EnableAtOpt {
+		case "<":
+			db = db.Where("enableAt <?", expiredAt)
+		case "<=":
+			db = db.Where("enableAt <=?", expiredAt)
+		case ">":
+			db = db.Where("enableAt >?", expiredAt)
+		case ">=":
+			db = db.Where("enableAt >=?", expiredAt)
+		default:
+			db = db.Where("enableAt =?", expiredAt)
+		}
+	}
+	if req.Used != 0 {
+		switch req.Used {
+		case 1:
+			db = db.Where("used =?", true)
+		case 2:
+			db = db.Where("used =?", false)
+		}
+	}
+	if req.Added != 0 {
+		switch req.Added {
+		case 1:
+			db = db.Where("used =?", true)
+		case 2:
+			db = db.Where("used =?", false)
+		}
+	}
+	r := db.Find(coupons)
+	if r.RowsAffected == 0 {
+		log.Logger.Info(custom_error.GetCouponFailed)
+		return nil, errors.New(custom_error.GetCouponFailed)
+	}
+	for _, coupon := range coupons {
+		couponList = append(couponList, ConvertCouponModel2pb(coupon))
+	}
+	res.Total = int32(r.RowsAffected)
+	res.CouponList = couponList
+	return &res, nil
 }
 
 func (c CoffeeServer) AssignCoupon(ctx context.Context, req *pb.CouponItem) (*pb.CouponItem, error) {
-	//TODO implement me
-	panic("implement me")
+	var coupon model.Coupon
+	r := internal.DB.First(&coupon, req.Id)
+	if r.RowsAffected == 0 {
+		log.Logger.Info(custom_error.GetCouponFailed)
+		return nil, errors.New(custom_error.GetCouponFailed)
+	}
+	coupon.AccountId = uint(req.AccountId)
+	r = internal.DB.Save(&coupon)
+	if r.RowsAffected == 0 {
+		log.Logger.Info(custom_error.UpdateCouponFailed)
+		return nil, errors.New(custom_error.UpdateCouponFailed)
+	}
+	return ConvertCouponModel2pb(&coupon), nil
 }
 
 func (c CoffeeServer) UseCoupon(ctx context.Context, req *pb.UseCouponReq) (*pb.UseCouponRes, error) {
-	//TODO implement me
-	panic("implement me")
+
 }
 
 func ConvertCouponModel2pb(coupon *model.Coupon) *pb.CouponItem {

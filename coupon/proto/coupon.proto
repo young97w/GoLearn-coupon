@@ -11,7 +11,6 @@ service CouponService{
 
     rpc AddCoupon(AddCouponReq) returns (CouponItem);
     rpc ListCoupon(ListCouponReq) returns (CouponListRes);
-    rpc DeleteCoupon(CouponItem) returns (DeleteCouponRes);
     rpc AssignCoupon(CouponItem) returns (CouponItem);
     rpc UseCoupon(UseCouponReq) returns (UseCouponRes);
 }
@@ -83,15 +82,18 @@ message CouponItem{
 message ListCouponReq{
     int32 pageSize=1;
     int32 pageNo=2;
+    string name=3;
+    int32 enableAt=4;
+    string enableAtOpt=5;
+    int32 expiredAt=6;
+    string expiredAtOpt=7;
+    int32 used =8;
+    int32 added=9;
 }
 
 message CouponListRes{
     repeated CouponItem couponList=1;
     int32 total=2;
-}
-
-message DeleteCouponRes{
-    repeated int32 id=1;
 }
 
 message UseCouponReq{
