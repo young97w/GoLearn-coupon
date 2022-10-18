@@ -15,6 +15,7 @@ const (
 	AddCouponFailed    = "添加优惠券失败"
 	GetCouponFailed    = "获取优惠券失败"
 	UpdateCouponFailed = "更新优惠券失败"
+	UnusableCoupon     = "不可用的优惠券"
 
 	ParameterIncorrect = "参数错误"
 )

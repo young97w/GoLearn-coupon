@@ -6,11 +6,14 @@ service CouponService{
     rpc AddCoffee(CoffeeItem) returns (CoffeeItem);
     rpc DeleteCoffee(DeleteCoffeeReq) returns (DeleteCoffeeRes);
     rpc UpdateCoffee(CoffeeItem)returns (CoffeeItem);
+    rpc SellCoffee(SellCoffeeReq)returns (CoffeeItem);
     rpc ListCoffee(ListCoffeeReq)returns (CoffeeListRes);
     rpc GetCoffee(CoffeeItem) returns (CoffeeItem);
 
-    rpc AddCoupon(AddCouponReq) returns (CouponItem);
+    rpc AddCoupon(AddCouponReq) returns (AddCouponRes);
     rpc ListCoupon(ListCouponReq) returns (CouponListRes);
+    rpc CouponDetails(CouponItem) returns (CouponItem);
+    rpc AvailableCoupons(AvailableCouponReq) returns (CouponListRes);
     rpc AssignCoupon(CouponItem) returns (CouponItem);
     rpc UseCoupon(UseCouponReq) returns (UseCouponRes);
 }
@@ -24,6 +27,11 @@ message CoffeeItem{
     string  sku=6;
     string  description=7;
     string  image=8;
+}
+
+message SellCoffeeReq{
+    int32   soldNum=1;
+    int32   id=2;
 }
 
 message DeleteCoffeeReq{
@@ -97,10 +105,18 @@ message CouponListRes{
 }
 
 message UseCouponReq{
-    repeated int32 couponId=1;
+    int32 couponId=1;
     float amount=2;
+    int32 accountId=3;
 }
 
 message UseCouponRes{
     bool result=1;
+    float amount=2;
+}
+
+message AvailableCouponReq{
+    float amount=1;
+    bool added=2;
+    int32 accountId=3;
 }

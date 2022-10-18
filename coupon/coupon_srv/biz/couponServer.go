@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-func (c CoffeeServer) AddCoupon(ctx context.Context, req *pb.AddCouponReq) (*pb.AddCouponRes, error) {
+func (c CouponServer) AddCoupon(ctx context.Context, req *pb.AddCouponReq) (*pb.AddCouponRes, error) {
 	var total int32
 	if req.Amount < 1 {
 		log.Logger.Info("add coupon amounts must greater than 1")
@@ -62,7 +62,7 @@ func (c CoffeeServer) AddCoupon(ctx context.Context, req *pb.AddCouponReq) (*pb.
 	return &pb.AddCouponRes{Total: total}, nil
 }
 
-func (c CoffeeServer) ListCoupon(ctx context.Context, req *pb.ListCouponReq) (*pb.CouponListRes, error) {
+func (c CouponServer) ListCoupon(ctx context.Context, req *pb.ListCouponReq) (*pb.CouponListRes, error) {
 	var res pb.CouponListRes
 	var couponList []*pb.CouponItem
 	var coupons []*model.Coupon
@@ -129,7 +129,39 @@ func (c CoffeeServer) ListCoupon(ctx context.Context, req *pb.ListCouponReq) (*p
 	return &res, nil
 }
 
-func (c CoffeeServer) AssignCoupon(ctx context.Context, req *pb.CouponItem) (*pb.CouponItem, error) {
+func (c CouponServer) CouponDetails(ctx context.Context, req *pb.CouponItem) (*pb.CouponItem, error) {
+	var coupon *model.Coupon
+	r := internal.DB.First(coupon, req.Id)
+	if r.RowsAffected == 0 {
+		log.Logger.Info(custom_error.GetCouponFailed)
+		return nil, errors.New(custom_error.GetCouponFailed)
+	}
+	return ConvertCouponModel2pb(coupon), nil
+}
+
+func (c CouponServer) AvailableCoupons(ctx context.Context, req *pb.AvailableCouponReq) (*pb.CouponListRes, error) {
+	var res pb.CouponListRes
+	var couponList []*pb.CouponItem
+	var coupons []*model.Coupon
+	today := time.Now().Format("2006-01-02")
+	r := internal.DB.Model(&model.Coupon{}).Where("(discount_from >= ? or ratio >0) and enable_at <= ? and expired_at >= ? and account_id = ?",
+		req.Amount,
+		today,
+		today,
+		req.AccountId,
+	).Find(coupons)
+	if r.RowsAffected == 0 {
+		return &pb.CouponListRes{Total: 0}, nil
+	}
+	for _, coupon := range coupons {
+		couponList = append(couponList, ConvertCouponModel2pb(coupon))
+	}
+	res.Total = int32(r.RowsAffected)
+	res.CouponList = couponList
+	return &res, nil
+}
+
+func (c CouponServer) AssignCoupon(ctx context.Context, req *pb.CouponItem) (*pb.CouponItem, error) {
 	var coupon model.Coupon
 	r := internal.DB.First(&coupon, req.Id)
 	if r.RowsAffected == 0 {
@@ -145,8 +177,32 @@ func (c CoffeeServer) AssignCoupon(ctx context.Context, req *pb.CouponItem) (*pb
 	return ConvertCouponModel2pb(&coupon), nil
 }
 
-func (c CoffeeServer) UseCoupon(ctx context.Context, req *pb.UseCouponReq) (*pb.UseCouponRes, error) {
-
+func (c CouponServer) UseCoupon(ctx context.Context, req *pb.UseCouponReq) (*pb.UseCouponRes, error) {
+	var coupon model.Coupon
+	r := internal.DB.First(coupon, req.CouponId)
+	if r.RowsAffected == 0 {
+		log.Logger.Info(custom_error.ParameterIncorrect)
+		return nil, errors.New(custom_error.ParameterIncorrect)
+	}
+	//check type
+	switch coupon.CouponType {
+	case 1:
+		if coupon.DiscountFrom >= req.Amount {
+			req.Amount -= coupon.Discount
+		} else {
+			log.Logger.Info(custom_error.UnusableCoupon)
+			return nil, errors.New(custom_error.UnusableCoupon)
+		}
+	case 2:
+		req.Amount *= coupon.Ratio
+	}
+	coupon.AccountId = uint(req.AccountId)
+	r = internal.DB.Save(&coupon)
+	if r.RowsAffected == 0 {
+		log.Logger.Info(custom_error.UpdateCouponFailed)
+		return nil, errors.New(custom_error.UpdateCouponFailed)
+	}
+	return &pb.UseCouponRes{Result: true, Amount: req.Amount}, nil
 }
 
 func ConvertCouponModel2pb(coupon *model.Coupon) *pb.CouponItem {

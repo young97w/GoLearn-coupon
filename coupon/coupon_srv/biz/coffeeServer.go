@@ -8,12 +8,15 @@ import (
 	"coupon/log"
 	"coupon/proto/pb"
 	"errors"
+	"sync"
 )
 
-type CoffeeServer struct {
+var m sync.Mutex
+
+type CouponServer struct {
 }
 
-func (c CoffeeServer) AddCoffee(ctx context.Context, req *pb.CoffeeItem) (*pb.CoffeeItem, error) {
+func (c CouponServer) AddCoffee(ctx context.Context, req *pb.CoffeeItem) (*pb.CoffeeItem, error) {
 	var coffee model.Coffee
 	convertCoffeePb2Model(req, &coffee)
 	r := internal.DB.Save(&coffee)
@@ -24,7 +27,7 @@ func (c CoffeeServer) AddCoffee(ctx context.Context, req *pb.CoffeeItem) (*pb.Co
 	return req, nil
 }
 
-func (c CoffeeServer) DeleteCoffee(ctx context.Context, req *pb.DeleteCoffeeReq) (*pb.DeleteCoffeeRes, error) {
+func (c CouponServer) DeleteCoffee(ctx context.Context, req *pb.DeleteCoffeeReq) (*pb.DeleteCoffeeRes, error) {
 	r := internal.DB.Delete(&model.Coffee{}, req.Id)
 	if r.RowsAffected == 0 {
 		log.Logger.Error(custom_error.DeleteCoffeeFailed)
@@ -33,7 +36,9 @@ func (c CoffeeServer) DeleteCoffee(ctx context.Context, req *pb.DeleteCoffeeReq)
 	return &pb.DeleteCoffeeRes{Result: true}, nil
 }
 
-func (c CoffeeServer) UpdateCoffee(ctx context.Context, req *pb.CoffeeItem) (*pb.CoffeeItem, error) {
+func (c CouponServer) UpdateCoffee(ctx context.Context, req *pb.CoffeeItem) (*pb.CoffeeItem, error) {
+	m.Lock()
+	defer m.Unlock()
 	var coffee model.Coffee
 	convertCoffeePb2Model(req, &coffee)
 	r := internal.DB.Save(&coffee)
@@ -44,7 +49,28 @@ func (c CoffeeServer) UpdateCoffee(ctx context.Context, req *pb.CoffeeItem) (*pb
 	return req, nil
 }
 
-func (c CoffeeServer) ListCoffee(ctx context.Context, req *pb.ListCoffeeReq) (*pb.CoffeeListRes, error) {
+func (c CouponServer) SellCoffee(ctx context.Context, req *pb.SellCoffeeReq) (*pb.CoffeeItem, error) {
+	m.Lock()
+	defer m.Unlock()
+	var coffee model.Coffee
+	r := internal.DB.First(&coffee, req.Id)
+	if r.RowsAffected == 0 {
+		log.Logger.Error(custom_error.CannotFindCoffee)
+		return nil, errors.New(custom_error.CannotFindCoffee)
+	}
+	tx := internal.DB.Begin()
+	coffee.SoldNum += req.SoldNum
+	r = tx.Save(coffee)
+	if r.RowsAffected == 0 {
+		log.Logger.Error(custom_error.UpdateCoffeeFailed)
+		tx.Rollback()
+		return nil, errors.New(custom_error.UpdateCoffeeFailed)
+	}
+	tx.Commit()
+	return ConvertCoffeeModel2Pb(&coffee), nil
+}
+
+func (c CouponServer) ListCoffee(ctx context.Context, req *pb.ListCoffeeReq) (*pb.CoffeeListRes, error) {
 	var coffees []model.Coffee
 	var coffeeList []*pb.CoffeeItem
 	var res pb.CoffeeListRes
@@ -62,7 +88,7 @@ func (c CoffeeServer) ListCoffee(ctx context.Context, req *pb.ListCoffeeReq) (*p
 	return &res, nil
 }
 
-func (c CoffeeServer) GetCoffee(ctx context.Context, req *pb.CoffeeItem) (*pb.CoffeeItem, error) {
+func (c CouponServer) GetCoffee(ctx context.Context, req *pb.CoffeeItem) (*pb.CoffeeItem, error) {
 	var coffee model.Coffee
 	var res *pb.CoffeeItem
 	r := internal.DB.First(&coffee, req.Id)
@@ -90,7 +116,7 @@ func convertCoffeePb2Model(coffeeReq *pb.CoffeeItem, coffee *model.Coffee) {
 	if coffeeReq.SoldNum != 0 {
 		coffee.SoldNum = coffeeReq.SoldNum
 	}
-	if len(coffeeReq.Sku) == 0 {
+	if len(coffeeReq.Sku) != 0 {
 		coffee.Sku = coffeeReq.Sku
 	}
 	if len(coffeeReq.Description) != 0 {
