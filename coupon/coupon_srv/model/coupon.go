@@ -6,7 +6,7 @@ import (
 
 type Coupon struct {
 	gorm.Model
-	Code         string `gorm:"type:varchar(32);not null"`
+	Code         string `gorm:"type:varchar(64);not null"`
 	Name         string `gorm:"type:varchar(32);not null"`
 	CouponType   int32
 	DiscountType int32 `gorm:"default:1"`
@@ -19,6 +19,4 @@ type Coupon struct {
 	ExpiredAt    string `gorm:"type:date;not null"`
 	AccountId    uint
 	Account      *Account
-	CoffeeId     uint
-	Coffee       *Coffee
 }

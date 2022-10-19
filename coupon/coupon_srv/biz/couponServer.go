@@ -33,7 +33,7 @@ func (c CouponServer) AddCoupon(ctx context.Context, req *pb.AddCouponReq) (*pb.
 		}
 		code := fmt.Sprintf("%s-%s", today, uuid.New().String())
 		//batch create
-		couponList := make([]*model.Coupon, 100)
+		couponList := make([]*model.Coupon, genCounts)
 		for j := 0; j < genCounts; j++ {
 			coupon := &model.Coupon{
 				Code:         code,
@@ -48,17 +48,18 @@ func (c CouponServer) AddCoupon(ctx context.Context, req *pb.AddCouponReq) (*pb.
 				EnableAt:     time.Unix(int64(req.EnableAt), 0).Format("2006-01-02"),
 				ExpiredAt:    time.Unix(int64(req.ExpiredAt), 0).Format("2006-01-02"),
 			}
-			couponList = append(couponList, coupon)
+			couponList[j] = coupon
 		}
-		r := tx.CreateInBatches(couponList, genCounts)
+		r := tx.Omit("account_id").CreateInBatches(couponList, genCounts)
 		if r.RowsAffected != int64(genCounts) {
 			log.Logger.Error(custom_error.AddCouponFailed)
 			tx.Rollback()
 			return nil, errors.New(custom_error.AddCouponFailed)
 		}
 		total += int32(genCounts)
-		i++
+		i += genCounts
 	}
+	tx.Commit()
 	return &pb.AddCouponRes{Total: total}, nil
 }
 
@@ -184,8 +185,19 @@ func (c CouponServer) UseCoupon(ctx context.Context, req *pb.UseCouponReq) (*pb.
 		log.Logger.Info(custom_error.ParameterIncorrect)
 		return nil, errors.New(custom_error.ParameterIncorrect)
 	}
+	var user model.Account
+	r = internal.DB.First(&user, req.AccountId)
+	if r.RowsAffected == 0 {
+		log.Logger.Info(custom_error.AccountNotExist)
+		return nil, errors.New(custom_error.AccountNotExist)
+	}
+	//check coupon user
+	if coupon.CouponType == 1 && !user.IsEmployee {
+		log.Logger.Info(custom_error.UnusableCoupon)
+		return nil, errors.New(custom_error.UnusableCoupon)
+	}
 	//check type
-	switch coupon.CouponType {
+	switch coupon.DiscountType {
 	case 1:
 		if coupon.DiscountFrom >= req.Amount {
 			req.Amount -= coupon.Discount

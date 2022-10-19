@@ -17,5 +17,7 @@ const (
 	UpdateCouponFailed = "更新优惠券失败"
 	UnusableCoupon     = "不可用的优惠券"
 
+	AccountNotExist = "账号不存在"
+
 	ParameterIncorrect = "参数错误"
 )
