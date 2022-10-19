@@ -40,8 +40,13 @@ func (c CouponServer) UpdateCoffee(ctx context.Context, req *pb.CoffeeItem) (*pb
 	m.Lock()
 	defer m.Unlock()
 	var coffee model.Coffee
+	r := internal.DB.First(&coffee, req.Id)
+	if r.RowsAffected == 0 {
+		log.Logger.Error(custom_error.CannotFindCoffee)
+		return nil, errors.New(custom_error.CannotFindCoffee)
+	}
 	convertCoffeePb2Model(req, &coffee)
-	r := internal.DB.Save(&coffee)
+	r = internal.DB.Save(&coffee)
 	if r.RowsAffected == 0 {
 		log.Logger.Error(custom_error.UpdateCoffeeFailed)
 		return nil, errors.New(custom_error.UpdateCoffeeFailed)
