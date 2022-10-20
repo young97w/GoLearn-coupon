@@ -1,0 +1,9 @@
+IpAddr: "127.0.0.1"
+Port: 8848
+TimeoutMs: 5000
+NamespaceId: "455dc2d0-99a6-4b8f-b985-6af403cd9e4d"
+DataId: "dev_coupon_srv"
+CacheDir: "nacos/cache"
+NotLoadCacheAtStart: true
+LogDir: "nacos/log"
+LogLevel: "debug"

@@ -9,6 +9,7 @@ import (
 	_ "github.com/mbobakov/grpc-consul-resolver"
 	"google.golang.org/grpc"
 	"testing"
+	"time"
 )
 
 func init() {
@@ -45,17 +46,43 @@ func TestCouponServer_AddCoupon(t *testing.T) {
 }
 
 func TestCouponServer_ListCoupon(t *testing.T) {
+	enable, _ := time.Parse("2006-01-02", "2022-10-27")
+	fmt.Println(enable.Unix())
 	res, err := client.ListCoupon(context.Background(), &pb.ListCouponReq{
-		PageSize:     6,
-		PageNo:       1,
-		Name:         "",
-		EnableAt:     0,
-		EnableAtOpt:  "",
-		ExpiredAt:    0,
-		ExpiredAtOpt: "",
+		PageSize: 6,
+		PageNo:   1,
+		//Name:     "员工券-20满减5",
+		//EnableAt:     1666073183,
+		//EnableAtOpt:  "=",
+		ExpiredAt:    int32(enable.Unix()),
+		ExpiredAtOpt: "<=",
 		Used:         0,
 		Added:        0,
 	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(res)
+}
+
+func TestCouponServer_CouponDetails(t *testing.T) {
+	res, err := client.CouponDetails(context.Background(), &pb.CouponItem{Id: 3844})
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(res)
+}
+
+func TestCouponServer_AvailableCoupons(t *testing.T) {
+	res, err := client.AvailableCoupons(context.Background(), &pb.AvailableCouponReq{AccountId: 1, Amount: 20})
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(res)
+}
+
+func TestCouponServer_AssignCoupon(t *testing.T) {
+	res, err := client.AssignCoupon(context.Background(), &pb.CouponItem{Id: 3844, AccountId: 1})
 	if err != nil {
 		t.Fatal(err)
 	}

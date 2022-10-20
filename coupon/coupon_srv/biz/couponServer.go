@@ -66,8 +66,8 @@ func (c CouponServer) AddCoupon(ctx context.Context, req *pb.AddCouponReq) (*pb.
 func (c CouponServer) ListCoupon(ctx context.Context, req *pb.ListCouponReq) (*pb.CouponListRes, error) {
 	var res pb.CouponListRes
 	var couponList []*pb.CouponItem
-	var coupons []*model.Coupon
-	db := internal.DB.Scopes(internal.Paginate(int(req.PageSize), int(req.PageNo))).Model(&model.Coupon{})
+	var coupons []model.Coupon
+	db := internal.DB.Scopes(internal.Paginate(int(req.PageSize), int(req.PageNo)))
 	if req.Name != "" {
 		db = db.Where("name =?", req.Name)
 	}
@@ -75,30 +75,30 @@ func (c CouponServer) ListCoupon(ctx context.Context, req *pb.ListCouponReq) (*p
 		enableAt := time.Unix(int64(req.EnableAt), 0).Format("2006-01-02")
 		switch req.EnableAtOpt {
 		case "<":
-			db = db.Where("enableAt <?", enableAt)
+			db = db.Where("enable_at <?", enableAt)
 		case "<=":
-			db = db.Where("enableAt <=?", enableAt)
+			db = db.Where("enable_at <=?", enableAt)
 		case ">":
-			db = db.Where("enableAt >?", enableAt)
+			db = db.Where("enable_at >?", enableAt)
 		case ">=":
-			db = db.Where("enableAt >=?", enableAt)
+			db = db.Where("enable_at >=?", enableAt)
 		default:
-			db = db.Where("enableAt =?", enableAt)
+			db = db.Where("enable_at =?", enableAt)
 		}
 	}
 	if req.ExpiredAt != 0 {
 		expiredAt := time.Unix(int64(req.ExpiredAt), 0).Format("2006-01-02")
 		switch req.EnableAtOpt {
 		case "<":
-			db = db.Where("enableAt <?", expiredAt)
+			db = db.Where("expired_at <?", expiredAt)
 		case "<=":
-			db = db.Where("enableAt <=?", expiredAt)
+			db = db.Where("expired_at <=?", expiredAt)
 		case ">":
-			db = db.Where("enableAt >?", expiredAt)
+			db = db.Where("expired_at >?", expiredAt)
 		case ">=":
-			db = db.Where("enableAt >=?", expiredAt)
+			db = db.Where("expired_at >=?", expiredAt)
 		default:
-			db = db.Where("enableAt =?", expiredAt)
+			db = db.Where("expired_at =?", expiredAt)
 		}
 	}
 	if req.Used != 0 {
@@ -112,18 +112,18 @@ func (c CouponServer) ListCoupon(ctx context.Context, req *pb.ListCouponReq) (*p
 	if req.Added != 0 {
 		switch req.Added {
 		case 1:
-			db = db.Where("used =?", true)
+			db = db.Where("added =?", true)
 		case 2:
-			db = db.Where("used =?", false)
+			db = db.Where("added =?", false)
 		}
 	}
-	r := db.Find(coupons)
+	r := db.Find(&coupons)
 	if r.RowsAffected == 0 {
 		log.Logger.Info(custom_error.GetCouponFailed)
 		return nil, errors.New(custom_error.GetCouponFailed)
 	}
 	for _, coupon := range coupons {
-		couponList = append(couponList, ConvertCouponModel2pb(coupon))
+		couponList = append(couponList, ConvertCouponModel2pb(&coupon))
 	}
 	res.Total = int32(r.RowsAffected)
 	res.CouponList = couponList
@@ -131,31 +131,31 @@ func (c CouponServer) ListCoupon(ctx context.Context, req *pb.ListCouponReq) (*p
 }
 
 func (c CouponServer) CouponDetails(ctx context.Context, req *pb.CouponItem) (*pb.CouponItem, error) {
-	var coupon *model.Coupon
-	r := internal.DB.First(coupon, req.Id)
+	var coupon model.Coupon
+	r := internal.DB.First(&coupon, req.Id)
 	if r.RowsAffected == 0 {
 		log.Logger.Info(custom_error.GetCouponFailed)
 		return nil, errors.New(custom_error.GetCouponFailed)
 	}
-	return ConvertCouponModel2pb(coupon), nil
+	return ConvertCouponModel2pb(&coupon), nil
 }
 
 func (c CouponServer) AvailableCoupons(ctx context.Context, req *pb.AvailableCouponReq) (*pb.CouponListRes, error) {
 	var res pb.CouponListRes
 	var couponList []*pb.CouponItem
-	var coupons []*model.Coupon
+	var coupons []model.Coupon
 	today := time.Now().Format("2006-01-02")
 	r := internal.DB.Model(&model.Coupon{}).Where("(discount_from >= ? or ratio >0) and enable_at <= ? and expired_at >= ? and account_id = ?",
 		req.Amount,
 		today,
 		today,
 		req.AccountId,
-	).Find(coupons)
+	).Find(&coupons)
 	if r.RowsAffected == 0 {
 		return &pb.CouponListRes{Total: 0}, nil
 	}
 	for _, coupon := range coupons {
-		couponList = append(couponList, ConvertCouponModel2pb(coupon))
+		couponList = append(couponList, ConvertCouponModel2pb(&coupon))
 	}
 	res.Total = int32(r.RowsAffected)
 	res.CouponList = couponList
@@ -164,10 +164,19 @@ func (c CouponServer) AvailableCoupons(ctx context.Context, req *pb.AvailableCou
 
 func (c CouponServer) AssignCoupon(ctx context.Context, req *pb.CouponItem) (*pb.CouponItem, error) {
 	var coupon model.Coupon
+	var account model.Account
 	r := internal.DB.First(&coupon, req.Id)
 	if r.RowsAffected == 0 {
 		log.Logger.Info(custom_error.GetCouponFailed)
 		return nil, errors.New(custom_error.GetCouponFailed)
+	}
+	r = internal.DB.First(&account, req.AccountId)
+	if r.RowsAffected == 0 {
+		log.Logger.Info(custom_error.AccountNotExist)
+		return nil, errors.New(custom_error.AccountNotExist)
+	}
+	if account.IsEmployee && coupon.CouponType == 1 {
+		return nil, errors.New(custom_error.CouponTypeMismatch)
 	}
 	coupon.AccountId = uint(req.AccountId)
 	r = internal.DB.Save(&coupon)
@@ -192,11 +201,11 @@ func (c CouponServer) UseCoupon(ctx context.Context, req *pb.UseCouponReq) (*pb.
 		return nil, errors.New(custom_error.AccountNotExist)
 	}
 	//check coupon user
-	if coupon.CouponType == 1 && !user.IsEmployee {
-		log.Logger.Info(custom_error.UnusableCoupon)
-		return nil, errors.New(custom_error.UnusableCoupon)
+	if coupon.CouponType == 1 && user.IsEmployee {
+		log.Logger.Info(custom_error.CouponTypeMismatch)
+		return nil, errors.New(custom_error.CouponTypeMismatch)
 	}
-	//check type
+	//check discount type
 	switch coupon.DiscountType {
 	case 1:
 		if coupon.DiscountFrom >= req.Amount {
