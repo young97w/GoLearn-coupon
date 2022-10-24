@@ -54,10 +54,10 @@ func TestCouponServer_ListCoupon(t *testing.T) {
 		//Name:     "员工券-20满减5",
 		//EnableAt:     1666073183,
 		//EnableAtOpt:  "=",
-		ExpiredAt:    int32(enable.Unix()),
-		ExpiredAtOpt: "<=",
-		Used:         0,
-		Added:        0,
+		//ExpiredAt:    int32(enable.Unix()),
+		//ExpiredAtOpt: "<=",
+		Used:  0,
+		Added: 0,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -83,6 +83,18 @@ func TestCouponServer_AvailableCoupons(t *testing.T) {
 
 func TestCouponServer_AssignCoupon(t *testing.T) {
 	res, err := client.AssignCoupon(context.Background(), &pb.CouponItem{Id: 3844, AccountId: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(res)
+}
+
+func TestCouponServer_UseCoupon(t *testing.T) {
+	res, err := client.UseCoupon(context.Background(), &pb.UseCouponReq{
+		CouponId:  3844,
+		Amount:    25,
+		AccountId: 1,
+	})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -68,6 +68,8 @@ func TestCouponServer_UpdateCoffee(t *testing.T) {
 }
 
 func TestCouponServer_SellCoffee(t *testing.T) {
+	m.Lock()
+	defer m.Unlock()
 	_, err := client.SellCoffee(context.Background(), &pb.SellCoffeeReq{
 		SoldNum: 2,
 		Id:      31,

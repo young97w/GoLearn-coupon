@@ -1,9 +1,9 @@
 package jwt
 
 import (
-	"account/custom_error"
-	"account/internal"
-	"account/log"
+	"coupon/custom_error"
+	"coupon/internal"
+	"coupon/log"
 	"errors"
 	"github.com/dgrijalva/jwt-go"
 	"time"

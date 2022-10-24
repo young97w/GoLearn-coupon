@@ -207,13 +207,13 @@ func LoginHandler(c *gin.Context) {
 	if err != nil {
 		log.Logger.Error(err.Error())
 		c.JSON(http.StatusOK, gin.H{
-			"msg": "internal server error",
+			"msg": "captcha over time",
 		})
 		return
 	}
 	if captcha != loginParams.Captcha {
 		c.JSON(http.StatusOK, gin.H{
-			"msg": "captcha error",
+			"msg": "captcha mismatch",
 		})
 		return
 	}

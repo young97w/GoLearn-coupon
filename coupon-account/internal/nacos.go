@@ -30,10 +30,6 @@ func init() {
 	InitRedis()
 }
 
-func InitTest() {
-
-}
-
 func InitNacos() {
 	v := viper.New()
 	v.SetConfigFile(fileName)

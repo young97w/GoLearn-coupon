@@ -71,7 +71,7 @@ func (c CouponServer) ListCoupon(ctx context.Context, req *pb.ListCouponReq) (*p
 	if req.Name != "" {
 		db = db.Where("name =?", req.Name)
 	}
-	if req.EnableAt != 0 {
+	if req.EnableAtOpt != "" {
 		enableAt := time.Unix(int64(req.EnableAt), 0).Format("2006-01-02")
 		switch req.EnableAtOpt {
 		case "<":
@@ -86,7 +86,7 @@ func (c CouponServer) ListCoupon(ctx context.Context, req *pb.ListCouponReq) (*p
 			db = db.Where("enable_at =?", enableAt)
 		}
 	}
-	if req.ExpiredAt != 0 {
+	if req.ExpiredAtOpt != "" {
 		expiredAt := time.Unix(int64(req.ExpiredAt), 0).Format("2006-01-02")
 		switch req.EnableAtOpt {
 		case "<":
@@ -175,7 +175,7 @@ func (c CouponServer) AssignCoupon(ctx context.Context, req *pb.CouponItem) (*pb
 		log.Logger.Info(custom_error.AccountNotExist)
 		return nil, errors.New(custom_error.AccountNotExist)
 	}
-	if account.IsEmployee && coupon.CouponType == 1 {
+	if !account.IsEmployee && coupon.CouponType == 2 {
 		return nil, errors.New(custom_error.CouponTypeMismatch)
 	}
 	coupon.AccountId = uint(req.AccountId)
@@ -189,7 +189,7 @@ func (c CouponServer) AssignCoupon(ctx context.Context, req *pb.CouponItem) (*pb
 
 func (c CouponServer) UseCoupon(ctx context.Context, req *pb.UseCouponReq) (*pb.UseCouponRes, error) {
 	var coupon model.Coupon
-	r := internal.DB.First(coupon, req.CouponId)
+	r := internal.DB.First(&coupon, req.CouponId)
 	if r.RowsAffected == 0 {
 		log.Logger.Info(custom_error.ParameterIncorrect)
 		return nil, errors.New(custom_error.ParameterIncorrect)
@@ -201,14 +201,14 @@ func (c CouponServer) UseCoupon(ctx context.Context, req *pb.UseCouponReq) (*pb.
 		return nil, errors.New(custom_error.AccountNotExist)
 	}
 	//check coupon user
-	if coupon.CouponType == 1 && user.IsEmployee {
+	if coupon.CouponType == 2 && !user.IsEmployee {
 		log.Logger.Info(custom_error.CouponTypeMismatch)
 		return nil, errors.New(custom_error.CouponTypeMismatch)
 	}
 	//check discount type
 	switch coupon.DiscountType {
 	case 1:
-		if coupon.DiscountFrom >= req.Amount {
+		if coupon.DiscountFrom <= req.Amount {
 			req.Amount -= coupon.Discount
 		} else {
 			log.Logger.Info(custom_error.UnusableCoupon)
@@ -218,6 +218,7 @@ func (c CouponServer) UseCoupon(ctx context.Context, req *pb.UseCouponReq) (*pb.
 		req.Amount *= coupon.Ratio
 	}
 	coupon.AccountId = uint(req.AccountId)
+	coupon.Used = true
 	r = internal.DB.Save(&coupon)
 	if r.RowsAffected == 0 {
 		log.Logger.Info(custom_error.UpdateCouponFailed)
