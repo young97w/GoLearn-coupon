@@ -37,15 +37,15 @@ func main() {
 	addr := fmt.Sprintf("%s:%d", host, port)
 	couponGroup := r.Group("/v1/coupon", middleware.ValidateToken())
 	{
-		couponGroup.POST("/addCoffee", handler.AddCoffeeHandler)
-		couponGroup.POST("/deleteCoffee", handler.DeleteCoffeeHandler)
-		couponGroup.POST("/updateCoffee", handler.UpdateCoffee)
-		couponGroup.GET("/listCoffee", handler.ListCoffee)
-		couponGroup.GET("/coffeeDetails", handler.GetCoffeeHandler)
+		couponGroup.POST("/addCoffee", handler.AddCoffeeHandler)       //test pass
+		couponGroup.POST("/deleteCoffee", handler.DeleteCoffeeHandler) //test pass
+		couponGroup.POST("/updateCoffee", handler.UpdateCoffee)        //test pass
+		couponGroup.GET("/listCoffee", handler.ListCoffee)             //test pass
+		couponGroup.GET("/coffeeDetails", handler.GetCoffeeHandler)    //test pass
 		//coupon
-		couponGroup.POST("/addCoupon", handler.AddCouponHandler)
-		couponGroup.POST("/listCoupons", handler.ListCouponHandler)
-		couponGroup.GET("/couponDetails", handler.CouponDetailsHandler)
+		couponGroup.POST("/addCoupon", handler.AddCouponHandler)        //test pass
+		couponGroup.POST("/listCoupons", handler.ListCouponHandler)     //test pass
+		couponGroup.GET("/couponDetails", handler.CouponDetailsHandler) //test pass
 		couponGroup.POST("/availableCoupons", handler.AvailableCouponsHandler)
 		couponGroup.POST("/assignCoupon", handler.AssignCouponHandler)
 		couponGroup.POST("/transaction", handler.TransactionHandler)

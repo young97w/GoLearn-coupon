@@ -331,8 +331,8 @@ func CouponDetailsHandler(c *gin.Context) {
 }
 
 type availableCouponReq struct {
-	accountId uint
-	amount    float32
+	AccountId uint
+	Amount    float32
 }
 
 func AvailableCouponsHandler(c *gin.Context) {
@@ -346,8 +346,8 @@ func AvailableCouponsHandler(c *gin.Context) {
 		return
 	}
 	res, err := client.AvailableCoupons(context.Background(), &pb.AvailableCouponReq{
-		Amount:    req.amount,
-		AccountId: int32(req.accountId),
+		Amount:    req.Amount,
+		AccountId: int32(req.AccountId),
 	})
 	if err != nil {
 		log.Logger.Info("get coupon failed:" + err.Error())
